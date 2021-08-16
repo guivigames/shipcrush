@@ -3,33 +3,49 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <string>
+#include <memory>
 
 ///< desciption of the player ship.
-class player 
+class object 
 {
 private:
+    sf::Vector2f m_speed;
     sf::Vector2f m_pos;
+    sf::Vector2u m_size;
+    sf::Sprite   m_sprit;
     sf::Texture m_texture;
-    sf::Sprite m_sprit;
 public:
-    player()
+    //object(std::string texture)
+    //{
+    //    m_texture.loadFromFile(texture);
+    //    m_speed.x = 1;
+    //    m_speed.y = 1;
+    //    m_pos.x = 20;
+    //    m_pos.y = 20;
+    //    m_sprit.setTexture(m_texture);
+    //    m_size = m_texture.getSize();
+    //};
+    object(std::string texture, sf::Vector2f pos, sf::Vector2f speed)
     {
-        m_pos.x = 20;
-        m_pos.y = 20;
-        m_texture.loadFromFile("player.png");
+        m_texture.loadFromFile(texture);
+        m_pos = pos;
+        m_speed = speed;
         m_sprit.setTexture(m_texture);
+        m_size = m_texture.getSize();
     };
-    ~player(){};
+    ~object(){};
     void draw(sf::RenderWindow &window)
     {
         m_sprit.setPosition(m_pos);
         window.draw(m_sprit);
     };
     sf::Vector2f GetPos(){ return m_pos; };
+    sf::Vector2f GetSpeed(){ return m_speed; };
     void SetPos(sf::Vector2f pos){ m_pos = pos; };
     void SetX(float x){ m_pos.x = x; };
     void SetY(float y){ m_pos.y = y; };
-    sf::Vector2u GetSize(){ return m_texture.getSize(); };
+    sf::Vector2u GetSize(){ return m_size; };
 };
 
 const float fps = 60;
@@ -63,6 +79,14 @@ bool isOutX( Bullet b)
     return false;
 }
 
+bool isOutX2( std::shared_ptr<object> b)
+{
+    if(b->GetPos().x <= 0){
+        return true;
+    }
+    return false;
+}
+
 // CIRCLE/RECTANGLE
 bool circleRect(float cx, float cy, float rad, float rx, float ry, float rw, float rh) 
 {
@@ -92,8 +116,12 @@ int main()
 {
     srand(time(NULL));
     //sf::Vector2f pos( 20, 20);  ///< Player position
-    player _player;
-    std::vector<Bullet> bullets;           
+    //sf::Texture playerTexture;//, shipTexture;
+    //playerTexture.loadFromFile("./player.png");
+    //shipTexture.loadFromFile("./ship.png");
+    object *player = new object("./player.png", sf::Vector2f(20, 20), sf::Vector2f(0, 0));
+    //std::vector<Bullet> bullets;
+    std::vector<std::shared_ptr<object>> ship;           
     sf::RenderWindow window(sf::VideoMode( 800, 600), "SFML works!");
     
     //sf::CircleShape shape(radius);
@@ -124,27 +152,36 @@ int main()
             sf::Time dt = timer.restart();  ///< Frame rate controller.
 
             ///< Update position of player.
-            sf::Vector2f newpos = _player.GetPos();
+            sf::Vector2f newpos = player->GetPos();
             newpos.y -= (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))      ?2 * 100 * dt.asSeconds():0;
             newpos.y += (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))    ?2 * 100 * dt.asSeconds():0;
             newpos.x -= (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))    ?2 * 100 * dt.asSeconds():0;
             newpos.x += (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))   ?2 * 100 * dt.asSeconds():0;
             if (newpos.x >= 0 && newpos.x <= width-radius * 2)
-                _player.SetX(newpos.x);
+                player->SetX(newpos.x);
             if (newpos.y > 0 && newpos.y <= height - radius * 2)
-                _player.SetY(newpos.y);
+                player->SetY(newpos.y);
             //shape.setPosition(  _player.);
 
             ///< Update bullets and check for colitio.
-            for (auto& b : bullets)
+            for (auto& b : ship)
             {
-                b.pos.x-= b.speed * 100 * dt.asSeconds();
-                if (circleRect(newpos.x+radius, newpos.y+radius, radius, b.pos.x, b.pos.y, bwidth, bheight))
+                //b.pos.x-= b.speed * 100 * dt.asSeconds();
+                b->SetX(b->GetPos().x - b->GetSpeed().x * 100 * dt.asSeconds());
+                if (circleRect(newpos.x+radius, newpos.y+radius, radius, b->GetPos().x, b->GetPos().y, bwidth, bheight))//b.pos.x, b.pos.y, bwidth, bheight))
                     gameover = true;
             }
-            std::remove_if(bullets.begin(), bullets.end(), isOutX);
-            if(rand()% 100 > 98)
-                bullets.push_back( createBullet());
+            //std::remove_if(bullets.begin(), bullets.end(), isOutX);
+            ship.erase(std::remove_if( std::begin(ship), std::end(ship), isOutX2), ship.end());
+            if(rand()% 100 > 98){
+                sf::Vector2f pos;
+                pos.x = width;
+                pos.y = rand()% height;
+                sf::Vector2f speed((rand()% 2)+1, 0);
+                ship.push_back( std::shared_ptr<object>(new object("./ship.png", pos, speed)));
+                //bullets.push_back( createBullet());
+            }
+                
 
             ///Get time for score.
             sf::Time s = gameTime.getElapsedTime();
@@ -155,9 +192,10 @@ int main()
         else {  ///< If game over.
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
             {
-                _player.SetPos(sf::Vector2f(20, height / 2));//pos.x = 20;
+                player->SetPos(sf::Vector2f(20, height / 2));//pos.x = 20;
                 //pos.y = height / 2;
-                bullets.clear();
+                //bullets.clear();
+                ship.clear();
                 gameover = false;
                 gameTime.restart();
                 score = 0;
@@ -168,15 +206,17 @@ int main()
 
         ///< Draw Everyting.
         window.clear();
-        for (auto& b : bullets)
+        //for (auto& b : bullets)
+        for (auto& b : ship)
         {
-            sf::RectangleShape r;
-            r.setFillColor(sf::Color::Red);
-            r.setPosition(b.pos);
-            r.setSize(sf::Vector2f(bwidth, bheight));
-            window.draw(r);
+            //sf::RectangleShape r;
+            //r.setFillColor(sf::Color::Red);
+            //r.setPosition(b.pos);
+            //r.setSize(sf::Vector2f(bwidth, bheight));
+            //window.draw(r);
+            b->draw(window);
         }
-        _player.draw(window);
+        player->draw(window);
         //window.draw(shape);
         window.draw(text);
         window.display();
