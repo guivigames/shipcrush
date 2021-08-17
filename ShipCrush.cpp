@@ -98,7 +98,7 @@ bool isOutX( Bullet b)
 
 bool isOutX2( std::shared_ptr<object> b)
 {
-    if(b->GetPos().x <= 0){
+    if(b->GetPos().x <= -b->GetRect().width){
         return true;
     }
     return false;
