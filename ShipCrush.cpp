@@ -10,6 +10,8 @@
 class object 
 {
 private:
+
+    sf::Rect<float> m_rect;
     sf::Vector2f m_speed;
     sf::Vector2f m_pos;
     sf::Vector2u m_size;
@@ -33,6 +35,10 @@ public:
         m_speed = speed;
         m_sprit.setTexture(m_texture);
         m_size = m_texture.getSize();
+        m_rect.top = m_pos.y;
+        m_rect.left = m_pos.x;
+        m_rect.width = m_size.x;
+        m_rect.height = m_size.y;
     };
     ~object(){};
     void draw(sf::RenderWindow &window)
@@ -42,10 +48,21 @@ public:
     };
     sf::Vector2f GetPos(){ return m_pos; };
     sf::Vector2f GetSpeed(){ return m_speed; };
-    void SetPos(sf::Vector2f pos){ m_pos = pos; };
-    void SetX(float x){ m_pos.x = x; };
-    void SetY(float y){ m_pos.y = y; };
+    void SetPos(sf::Vector2f pos){ 
+        m_pos = pos; 
+        m_rect.left = m_pos.x; 
+        m_rect.top = m_pos.y;
+        };
+    void SetX(float x){ 
+        m_pos.x = x; 
+        m_rect.left = m_pos.x;
+        };
+    void SetY(float y){ 
+        m_pos.y = y; 
+        m_rect.top = m_pos.y;
+        };
     sf::Vector2u GetSize(){ return m_size; };
+    sf::Rect<float> GetRect() { return m_rect; };
 };
 
 const float fps = 60;
@@ -168,7 +185,7 @@ int main()
             {
                 //b.pos.x-= b.speed * 100 * dt.asSeconds();
                 b->SetX(b->GetPos().x - b->GetSpeed().x * 100 * dt.asSeconds());
-                if (circleRect(newpos.x+radius, newpos.y+radius, radius, b->GetPos().x, b->GetPos().y, bwidth, bheight))//b.pos.x, b.pos.y, bwidth, bheight))
+                if (b->GetRect().intersects((player->GetRect())))//circleRect(newpos.x+radius, newpos.y+radius, radius, b->GetPos().x, b->GetPos().y, bwidth, bheight))//b.pos.x, b.pos.y, bwidth, bheight))
                     gameover = true;
             }
             //std::remove_if(bullets.begin(), bullets.end(), isOutX);
