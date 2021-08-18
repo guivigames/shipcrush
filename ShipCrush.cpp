@@ -128,7 +128,22 @@ bool circleRect(float cx, float cy, float rad, float rx, float ry, float rw, flo
   }
   return false;
 }
+// CIRCLE/CIRCLE
+bool circleCircle(float c1x, float c1y, float c1r, float c2x, float c2y, float c2r) {
 
+  // get distance between the circle's centers
+  // use the Pythagorean Theorem to compute the distance
+  float distX = c1x - c2x;
+  float distY = c1y - c2y;
+  float distance = sqrt( (distX*distX) + (distY*distY) );
+
+  // if the distance is less than the sum of the circle's
+  // radii, the circles are touching!
+  if (distance <= c1r+c2r) {
+    return true;
+  }
+  return false;
+}
 int main()
 {
     srand(time(NULL));
@@ -180,12 +195,20 @@ int main()
                 player->SetY(newpos.y);
             //shape.setPosition(  _player.);
 
+            float cx, cy, cr;
+            cx = player->GetPos().x+(player->GetSize().x/2);
+            cy = player->GetPos().y+(player->GetSize().y/2);
+            cr = std::min(player->GetSize().x/2, player->GetSize().y/2);
             ///< Update bullets and check for colitio.
             for (auto& b : ship)
             {
                 //b.pos.x-= b.speed * 100 * dt.asSeconds();
                 b->SetX(b->GetPos().x - b->GetSpeed().x * 100 * dt.asSeconds());
-                if (b->GetRect().intersects((player->GetRect())))//circleRect(newpos.x+radius, newpos.y+radius, radius, b->GetPos().x, b->GetPos().y, bwidth, bheight))//b.pos.x, b.pos.y, bwidth, bheight))
+                float bx, by, br;
+                bx = b->GetPos().x+(b->GetSize().x/2);
+                by = b->GetPos().y+(b->GetSize().y/2);
+                br = std::min(b->GetSize().x/2, b->GetSize().y/2);
+                if (circleCircle(cx, cy, cr, bx, by, br))//b->GetRect().intersects((player->GetRect())))//circleRect(newpos.x+radius, newpos.y+radius, radius, b->GetPos().x, b->GetPos().y, bwidth, bheight))//b.pos.x, b.pos.y, bwidth, bheight))
                     gameover = true;
             }
             //std::remove_if(bullets.begin(), bullets.end(), isOutX);
