@@ -5,6 +5,9 @@
 #include <math.h>
 #include <string>
 #include <memory>
+#include "TextureManager.h"
+
+TextureManager g_textureManager;
 
 ///< desciption of the player ship.
 class object 
@@ -28,6 +31,17 @@ public:
     //    m_sprit.setTexture(m_texture);
     //    m_size = m_texture.getSize();
     //};
+    object(sf::Texture& texture, sf::Vector2f pos, sf::Vector2f speed)
+    {
+        m_pos = pos;
+        m_speed = speed;
+        m_sprit.setTexture(texture);
+        m_size = texture.getSize();
+        m_rect.top = m_pos.y;
+        m_rect.left = m_pos.x;
+        m_rect.width = m_size.x;
+        m_rect.height = m_size.y;
+    };
     object(std::string texture, sf::Vector2f pos, sf::Vector2f speed)
     {
         m_texture.loadFromFile(texture);
@@ -151,7 +165,8 @@ int main()
     //sf::Texture playerTexture;//, shipTexture;
     //playerTexture.loadFromFile("./player.png");
     //shipTexture.loadFromFile("./ship.png");
-    object *player = new object("./player.png", sf::Vector2f(20, 20), sf::Vector2f(0, 0));
+    //object *player = new object("./player.png", sf::Vector2f(20, 20), sf::Vector2f(0, 0));
+    object *player = new object(TextureManager::GetTexture("player.png"), sf::Vector2f(20, 20), sf::Vector2f(0, 0));
     //std::vector<Bullet> bullets;
     std::vector<std::shared_ptr<object>> ship;           
     sf::RenderWindow window(sf::VideoMode( 800, 600), "SFML works!");
@@ -218,7 +233,8 @@ int main()
                 pos.x = width;
                 pos.y = rand()% height;
                 sf::Vector2f speed((rand()% 2)+1, 0);
-                ship.push_back( std::shared_ptr<object>(new object("./ship.png", pos, speed)));
+                //ship.push_back( std::shared_ptr<object>(new object("./ship.png", pos, speed)));
+                ship.push_back( std::shared_ptr<object>(new object(TextureManager::GetTexture("ship.png"), pos, speed)));
                 //bullets.push_back( createBullet());
             }
                 
